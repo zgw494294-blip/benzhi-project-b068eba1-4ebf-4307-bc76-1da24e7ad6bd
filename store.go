@@ -156,14 +156,37 @@ func (s *Store) Finalize(ctx context.Context, roundID string) (Round, error) {
 	return s.snapshotLocked(roundID)
 }
 
-// GetRound returns a defensive snapshot of a round.
+// GetRound returns a defensive snapshot of a round. A read that blocks
+// waiting for the store lock honors context cancellation: if the context is
+// canceled before the store lock is acquired, GetRound returns ErrCanceled
+// and does not return the round.
 func (s *Store) GetRound(ctx context.Context, roundID string) (Round, error) {
 	if err := checkContext(ctx); err != nil {
 		return Round{}, err
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.snapshotLocked(roundID)
+	type readResult struct {
+		round Round
+		err   error
+	}
+	resultCh := make(chan readResult, 1)
+	go func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		// Re-check the context after acquiring the lock so a cancellation
+		// that arrived while waiting for the store lock is still observed.
+		if err := checkContext(ctx); err != nil {
+			resultCh <- readResult{Round{}, err}
+			return
+		}
+		round, err := s.snapshotLocked(roundID)
+		resultCh <- readResult{round, err}
+	}()
+	select {
+	case r := <-resultCh:
+		return r.round, r.err
+	case <-operationContext(ctx).Done():
+		return Round{}, checkContext(ctx)
+	}
 }
 
 func (s *Store) snapshotLocked(roundID string) (Round, error) {
