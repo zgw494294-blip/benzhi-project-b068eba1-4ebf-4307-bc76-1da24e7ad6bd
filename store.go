@@ -163,6 +163,9 @@ func (s *Store) GetRound(ctx context.Context, roundID string) (Round, error) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if err := checkContext(ctx); err != nil {
+		return Round{}, err
+	}
 	return s.snapshotLocked(roundID)
 }
 
