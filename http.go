@@ -49,11 +49,23 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		switch {
-		case len(segments) == 2 && r.Method == http.MethodGet:
+		case len(segments) == 2:
+			if r.Method != http.MethodGet {
+				writeMethodError(w, http.MethodGet)
+				return
+			}
 			s.getRound(w, r, id)
-		case len(segments) == 3 && segments[2] == "requests" && r.Method == http.MethodPost:
+		case len(segments) == 3 && segments[2] == "requests":
+			if r.Method != http.MethodPost {
+				writeMethodError(w, http.MethodPost)
+				return
+			}
 			s.addRequest(w, r, id)
-		case len(segments) == 3 && segments[2] == "finalize" && r.Method == http.MethodPost:
+		case len(segments) == 3 && segments[2] == "finalize":
+			if r.Method != http.MethodPost {
+				writeMethodError(w, http.MethodPost)
+				return
+			}
 			s.finalize(w, r, id)
 		default:
 			writeError(w, http.StatusNotFound, ErrRoundNotFound)
