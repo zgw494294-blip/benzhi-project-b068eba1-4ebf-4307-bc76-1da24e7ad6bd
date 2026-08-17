@@ -51,7 +51,7 @@ func operationContext(ctx context.Context) context.Context {
 
 func checkContext(ctx context.Context) error {
 	if err := operationContext(ctx).Err(); err != nil {
-		return fmt.Errorf("%w: %v", ErrCanceled, err)
+		return fmt.Errorf("%w: %w", ErrCanceled, err)
 	}
 	return nil
 }
