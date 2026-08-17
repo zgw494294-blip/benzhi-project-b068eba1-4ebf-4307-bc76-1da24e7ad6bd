@@ -29,7 +29,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Body != nil {
 		r.Body = http.MaxBytesReader(w, r.Body, maxJSONBody)
 	}
-	segments, err := routeSegments(r.URL.Path)
+	segments, err := routeSegments(r.URL.EscapedPath())
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
