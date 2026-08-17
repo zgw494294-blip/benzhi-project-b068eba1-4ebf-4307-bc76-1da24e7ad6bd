@@ -67,7 +67,7 @@ func (s *Store) CreateRound(ctx context.Context, inventory []InventoryItem) (Rou
 	}
 	id, err := s.ids()
 	if err != nil {
-		return Round{}, fmt.Errorf("%w: %v", ErrIdentifierSource, err)
+		return Round{}, fmt.Errorf("%w: %w", ErrIdentifierSource, err)
 	}
 	if id == "" {
 		return Round{}, fmt.Errorf("%w: empty identifier", ErrIdentifierSource)
